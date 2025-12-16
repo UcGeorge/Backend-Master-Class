@@ -13,3 +13,6 @@ dropdb simple_bank
 exit
 
 <!-- Section 2 -->
+go install github.com/golang/mock/mockgen@v1.6.0
+go get github.com/golang/mock/mockgen/model
+mockgen -package mockdb -destination db/mock/store.go github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/db/sqlc Store

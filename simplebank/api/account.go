@@ -5,6 +5,7 @@ import (
 
 	db "github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/db/sqlc"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 type CreateAccountRequest struct {
@@ -52,6 +53,10 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 	account, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorsResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorsResponse(err))
 		return
 	}

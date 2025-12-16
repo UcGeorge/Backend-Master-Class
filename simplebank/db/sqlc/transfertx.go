@@ -23,7 +23,7 @@ type ContextKey struct{}
 var txKey ContextKey
 
 // TransferTx performs a money transfer from one account to the other.
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
