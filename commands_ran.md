@@ -1,3 +1,4 @@
+<!-- Section 1 -->
 brew install sqlc
 docker pull postgres:18-alpine
 docker run --name postgres18 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:18-alpine
@@ -10,3 +11,5 @@ createdb --username=root --owner=root simple_bank
 psql simple_bank
 dropdb simple_bank
 exit
+
+<!-- Section 2 -->
