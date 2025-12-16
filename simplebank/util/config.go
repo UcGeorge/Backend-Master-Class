@@ -1,6 +1,8 @@
 package util
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 // Config stores all configuration of the application
 type Config struct {
@@ -14,11 +16,19 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.SetConfigName("app")
 	viper.SetConfigType("env")
 
+	viper.SetEnvPrefix("simplebank")
 	viper.AutomaticEnv()
 
+	_ = viper.BindEnv("DB_DRIVER")
+	_ = viper.BindEnv("DB_SOURCE")
+	_ = viper.BindEnv("SERVER_ADDRESS")
+
 	err = viper.ReadInConfig()
+
 	if err != nil {
-		return
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return
+		}
 	}
 
 	err = viper.Unmarshal(&config)
