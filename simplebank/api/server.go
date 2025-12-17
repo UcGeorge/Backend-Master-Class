@@ -3,6 +3,8 @@ package api
 import (
 	db "github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/db/sqlc"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -17,8 +19,14 @@ func NewServer(store db.Store) *Server {
 	// Initialize router
 	server.router = router
 
-	// Setup account routes
+	// Register validations
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("currency", validCurrency)
+	}
+
+	// Setup routes
 	server.setupAccountRoutes()
+	server.setupTransferRoutes()
 
 	return server
 }
