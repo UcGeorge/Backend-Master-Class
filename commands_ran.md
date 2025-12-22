@@ -1,5 +1,6 @@
 <!-- Section 1 -->
 brew install sqlc
+go mod init github.com/UcGeorge/Upskill/BackendMasterClass/simplebank 
 docker pull postgres:18-alpine
 docker run --name postgres18 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:18-alpine
 docker exec -it postgres18 psql -U root

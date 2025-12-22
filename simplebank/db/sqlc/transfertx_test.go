@@ -123,7 +123,7 @@ func TestTransferTxDeadlock(t *testing.T) {
 
 	errs := make(chan error)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		txName := fmt.Sprintf("tx %d", i+1)
 		go func() {
 			ctx := context.WithValue(context.Background(), txKey, txName)

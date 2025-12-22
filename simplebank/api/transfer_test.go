@@ -14,14 +14,16 @@ import (
 	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateTransferAPI(t *testing.T) {
 	fromAccount := randomAccount()
-
 	toAccount := randomAccount()
-	toAccount.Currency = fromAccount.Currency
+
+	fromAccount.Currency = util.USD
+	toAccount.Currency = util.USD
 
 	amount := util.RandomInt(1, 1000)
 
@@ -177,7 +179,122 @@ func TestCreateTransferAPI(t *testing.T) {
 			},
 		},
 
-		// TODO: Business Logic Errors (404 / 400)
+		// Business Logic Errors (404 / 400)
+		{
+			name: "FromAccountNotFound",
+			body: gin.H{
+				"from_account_id": transfer.FromAccountID,
+				"to_account_id":   transfer.ToAccountID,
+				"amount":          amount,
+				"currency":        toAccount.Currency,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(fromAccount.ID)).
+					Times(1).
+					Return(db.Account{}, pgx.ErrNoRows)
+
+				// Expect no Transfer transaction
+				store.EXPECT().
+					TransferTx(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "ToAccountNotFound",
+			body: gin.H{
+				"from_account_id": transfer.FromAccountID,
+				"to_account_id":   transfer.ToAccountID,
+				"amount":          amount,
+				"currency":        toAccount.Currency,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(fromAccount.ID)).
+					Times(1).
+					Return(fromAccount, nil)
+
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(toAccount.ID)).
+					Times(1).
+					Return(db.Account{}, pgx.ErrNoRows)
+
+				// Expect no Transfer transaction
+				store.EXPECT().
+					TransferTx(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "FromAccountCurrencyMismatch",
+			body: gin.H{
+				"from_account_id": fromAccount.ID,
+				"to_account_id":   toAccount.ID,
+				"amount":          amount,
+				"currency":        fromAccount.Currency,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				// Create a specific FromAccount for this test that has the wrong currency
+				wrongCurrencyAccount := db.Account(fromAccount)
+				wrongCurrencyAccount.Currency = util.EUR
+
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(fromAccount.ID)).
+					Times(1).
+					Return(wrongCurrencyAccount, nil)
+
+				// Expect no check for ToAccount
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(toAccount.ID)).
+					Times(0)
+
+				// Expect no Transfer transaction
+				store.EXPECT().
+					TransferTx(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "ToAccountCurrencyMismatch",
+			body: gin.H{
+				"from_account_id": fromAccount.ID,
+				"to_account_id":   toAccount.ID,
+				"amount":          amount,
+				"currency":        fromAccount.Currency,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(fromAccount.ID)).
+					Return(fromAccount, nil)
+
+				// Create a specific ToAccount for this test that has the wrong currency
+				wrongCurrencyAccount := toAccount
+				wrongCurrencyAccount.Currency = util.EUR
+
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(toAccount.ID)).
+					Times(1).
+					Return(wrongCurrencyAccount, nil)
+
+				// Expect no Transfer transaction
+				store.EXPECT().
+					TransferTx(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+
 		// TODO: Transaction / Internal Errors (500)
 	}
 
