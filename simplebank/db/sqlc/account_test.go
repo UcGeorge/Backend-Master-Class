@@ -9,13 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomAccount(t *testing.T) Account {
-	arg := CreateAccountParams{
-		Owner:    util.RandomOwner(),
-		Balance:  util.RandomMoney(),
-		Currency: util.RandomCurrency(),
-	}
-
+func createAccountFromArg(t *testing.T, arg CreateAccountParams) Account {
 	account, err := testQueries.CreateAccount(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
@@ -30,12 +24,25 @@ func createRandomAccount(t *testing.T) Account {
 	return account
 }
 
+func createRandomAccount(t *testing.T, owner User) Account {
+	arg := CreateAccountParams{
+		Owner:    owner.Username,
+		Balance:  util.RandomMoney(),
+		Currency: util.RandomCurrency(),
+	}
+
+	account := createAccountFromArg(t, arg)
+	return account
+}
+
 func TestCreateAccount(t *testing.T) {
-	createRandomAccount(t)
+	user := createRandomUser(t)
+	createRandomAccount(t, user)
 }
 
 func TestGetAccount(t *testing.T) {
-	account1 := createRandomAccount(t)
+	user := createRandomUser(t)
+	account1 := createRandomAccount(t, user)
 
 	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
 	require.NoError(t, err)
@@ -49,7 +56,8 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
-	account1 := createRandomAccount(t)
+	user := createRandomUser(t)
+	account1 := createRandomAccount(t, user)
 
 	arg := UpdateAccountParams{
 		ID:      account1.ID,
@@ -68,7 +76,8 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	account1 := createRandomAccount(t)
+	user := createRandomUser(t)
+	account1 := createRandomAccount(t, user)
 
 	err := testQueries.DeleteAccount(context.Background(), account1.ID)
 	require.NoError(t, err)
@@ -81,7 +90,8 @@ func TestDeleteAccount(t *testing.T) {
 
 func TestListAccounts(t *testing.T) {
 	for range 10 {
-		createRandomAccount(t)
+		user := createRandomUser(t)
+		createRandomAccount(t, user)
 	}
 
 	arg := ListAccountsParams{
@@ -95,5 +105,48 @@ func TestListAccounts(t *testing.T) {
 
 	for _, account := range accounts {
 		require.NotEmpty(t, account)
+	}
+}
+
+func TestListAccountsForUser(t *testing.T) {
+	user := createRandomUser(t)
+
+	accountUSD := createAccountFromArg(t, CreateAccountParams{
+		Owner:    user.Username,
+		Balance:  util.RandomAmount(),
+		Currency: util.USD,
+	})
+	accountEUR := createAccountFromArg(t, CreateAccountParams{
+		Owner:    user.Username,
+		Balance:  util.RandomAmount(),
+		Currency: util.EUR,
+	})
+	accountCAD := createAccountFromArg(t, CreateAccountParams{
+		Owner:    user.Username,
+		Balance:  util.RandomAmount(),
+		Currency: util.CAD,
+	})
+
+	arg := ListAccountsForUserParams{
+		Limit:    5,
+		Offset:   0,
+		Username: user.Username,
+	}
+
+	accounts, err := testQueries.ListAccountsForUser(context.Background(), arg)
+	require.NoError(t, err)
+	require.Len(t, accounts, 3)
+
+	for _, account := range accounts {
+		require.NotEmpty(t, account)
+
+		switch account.Currency {
+		case util.USD:
+			require.Equal(t, account.ID, accountUSD.ID)
+		case util.EUR:
+			require.Equal(t, account.ID, accountEUR.ID)
+		case util.CAD:
+			require.Equal(t, account.ID, accountCAD.ID)
+		}
 	}
 }

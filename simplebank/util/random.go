@@ -1,6 +1,9 @@
 package util
 
-import "math/rand"
+import (
+	"fmt"
+	"math/rand"
+)
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -20,6 +23,16 @@ func RandomString(n int) string {
 		bytes[i] = letterBytes[rand.Int63n(int64(len(letterBytes)))]
 	}
 	return string(bytes)
+}
+
+// RandomName generates a random name.
+func RandomName() string {
+	return fmt.Sprintf("%s %s", RandomString(6), RandomString(4))
+}
+
+// RandomEmail generates a random email
+func RandomEmail() string {
+	return fmt.Sprintf("%s.%s@mail.com", RandomString(5), RandomString(1))
 }
 
 // RandomOwner generates a random owner name.
