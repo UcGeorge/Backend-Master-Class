@@ -27,6 +27,7 @@ func NewServer(store db.Store) *Server {
 	// Setup routes
 	server.setupAccountRoutes()
 	server.setupTransferRoutes()
+	server.setupUserRoutes()
 
 	return server
 }
