@@ -2,6 +2,7 @@ package api
 
 import (
 	db "github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/db/sqlc"
+	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/middleware"
 	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/token"
 	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/util"
 	"github.com/gin-gonic/gin"
@@ -38,9 +39,12 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	}
 
 	// Setup routes
-	server.setupAccountRoutes()
-	server.setupTransferRoutes()
-	server.setupUserRoutes()
+	server.setupUserRoutes(server.router)
+
+	authRoutes := server.router.Group("/").Use(middleware.AuthMiddleware(server.tokenMaker))
+
+	server.setupAccountRoutes(authRoutes)
+	server.setupTransferRoutes(authRoutes)
 
 	return server, nil
 }

@@ -67,6 +67,6 @@ func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency s
 	return true
 }
 
-func (server *Server) setupTransferRoutes() {
-	server.router.POST("/transfer", server.CreateTransfer)
+func (server *Server) setupTransferRoutes(router gin.IRoutes) {
+	router.POST("/transfer", server.CreateTransfer)
 }

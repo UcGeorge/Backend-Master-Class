@@ -123,9 +123,9 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rsp)
 }
 
-func (server *Server) setupUserRoutes() {
-	server.router.POST("/users", server.createUser)
-	server.router.POST("/users/login", server.loginUser)
-	// server.router.GET("/accounts/:id", server.getUser)
-	// server.router.GET("/accounts", server.listUsers)
+func (server *Server) setupUserRoutes(router gin.IRoutes) {
+	router.POST("/users", server.createUser)
+	router.POST("/users/login", server.loginUser)
+	// router.GET("/accounts/:id", server.getUser)
+	// router.GET("/accounts", server.listUsers)
 }
