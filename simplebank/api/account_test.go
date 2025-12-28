@@ -171,7 +171,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			// Marshal body to JSON
@@ -250,7 +250,7 @@ func TestGetAccountAPI(t *testing.T) {
 			tc.buildStubs(mockStore)
 
 			// Start test server and send request
-			server := NewServer(mockStore)
+			server := newTestServer(t, mockStore)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/accounts/%v", tc.accountID)

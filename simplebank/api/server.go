@@ -2,18 +2,31 @@ package api
 
 import (
 	db "github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/db/sqlc"
+	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/token"
+	"github.com/UcGeorge/Upskill/BackendMasterClass/simplebank/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	router     *gin.Engine
+	store      db.Store
+	tokenMaker token.Maker
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	maker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, err
+	}
+
+	server := &Server{
+		config:     config,
+		store:      store,
+		tokenMaker: maker,
+	}
 	router := gin.Default()
 
 	// Initialize router
@@ -29,7 +42,7 @@ func NewServer(store db.Store) *Server {
 	server.setupTransferRoutes()
 	server.setupUserRoutes()
 
-	return server
+	return server, nil
 }
 
 func (server *Server) Start(address string) error {
